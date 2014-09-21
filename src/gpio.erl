@@ -82,7 +82,7 @@ write(Pin, Value) ->
 
 %% @doc read/1 returns the value of an input pin.
 %% @end
--spec read(pin()) -> pin_state() | {'error', 'reading_from_output_pin'}.
+-spec read(pin()) -> pin_state().
 read(Pin) ->
   call_existing(Pin, read).
 
@@ -156,15 +156,12 @@ handle_call({write, _Value}, _From, #state{direction=input}=State) ->
   %% @todo: check with Ömer what the behaviour should be here
   Reply = {error, writing_to_input_pin},
   {reply, Reply, State};
-handle_call(read, From, #state{direction=input,
-                               pending=Pending,
+handle_call(read, From, #state{pending=Pending,
                                port=Port}=State) ->
   port_lib:call_to_port(Port, From, {read}),
   NewPending = [From | Pending ],
   {noreply, State#state{pending=NewPending}};
-handle_call(read, _From, #state{direction=output}=State) ->
-  Reply = {error, reading_from_output_pin},
-  {reply, Reply, State};
+
 handle_call({set_int, Condition, Requestor},
             From,
             #state{direction=input,
